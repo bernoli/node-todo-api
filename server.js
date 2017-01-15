@@ -10,18 +10,15 @@ var nextId = 1;
 app.use(body_parser.json());  // this will convert each json data coming in into json and put it in requrest.body
 app.use(express.static(__dirname+"/public"));
 
-app.get('/', 
-	function(req, res)
-	{
+app.get('/', function(req, res)
+{
 		res.send("Todo API Root");
-	}
-	);
+});
 
-app.get('/todos', 
-	function(req, res)
-	{
-		res.json(todos);   
-	});
+app.get('/todos', function(req, res)
+{
+	res.json(todos);   
+});
 
 app.get('/todos/:id', function(req,res)
 {
@@ -37,7 +34,8 @@ app.get('/todos/:id', function(req,res)
 	//res.send('Asking for todo with ID: '+ req.params.id)
 });
 
-app.post('/todos', function(req, res){
+app.post('/todos', function(req, res)
+{
 	var todoItem = req.body;
     var body = _.pick(req.body, 'description','completed');
 
@@ -54,7 +52,17 @@ app.post('/todos', function(req, res){
 	
 });
 
+app.delete('/todos/:id', function(req, res)
+{
+	var todoId = parseInt(req.params.id,10);
+	var todoItem = _.findWhere(todos, {id:todoId});
+	if (!todoItem){
+		return res.status(400).send();
+	}
+	todos = _.without(todos, todoItem);
+	return res.json(todos);
+});
 
 app.listen(PORT,function(){
 	console.log("Listen on port: " + PORT);
-})
+});
