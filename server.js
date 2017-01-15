@@ -1,26 +1,11 @@
 var express = require('express');
-
+var body_parser = require('body-parser');
 var app = express();
 var PORT = process.env.PORT || 3000;
 
-var todos = [
-	{
-		description:'Meet toli for lunch',
-		completed:false,
-		id:1,
-	},
-	{
-		description:'Go to market',
-		completed:false,
-		id:2,
-	},
-	{
-		id:3,
-		description:'Study node.js from udemy.',
-		completed:true
-	}
-]
-
+var todos =[]
+var nextId = 1;
+app.use(body_parser.json());  // this will convert each json data coming in into json and put it in requrest.body
 app.use(express.static(__dirname+"/public"));
 
 app.get('/', 
@@ -57,6 +42,15 @@ app.get('/todos/:id', function(req,res)
 	}
 	//res.send('Asking for todo with ID: '+ req.params.id)
 });
+
+app.post('/todos', function(req, res){
+	var todoItem = req.body;
+	todoItem.id = nextId;
+	todos.push(todoItem);
+	res.send("Id: "+ nextId);
+	nextId++;
+});
+
 
 app.listen(PORT,function(){
 	console.log("Listen on port: " + PORT);
