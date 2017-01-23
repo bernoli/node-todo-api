@@ -15,44 +15,37 @@ app.get('/', function(req, res) {
 });
 
 app.get('/todos', function(req, res) {
-	var reqParams = req.query; // parse quere parameters ?key=value&key2=value2 etc.
-	var filteredTodos = db.todo.
+	var query = req.query; // parse quere parameters ?key=value&key2=value2 etc.
+	var where = {};
 
-	console.log(filteredTodos);
-
-	if (reqParams.hasOwnProperty('completed')) {
-		if (reqParams.completed === 'true') {
-			filteredTodos = _.where(filteredTodos, {
-				completed: true
-			});
+	if (query.hasOwnProperty('completed')) {
+		if (query.completed === 'true') {
+			where.completed = true;
 		} else {
-			filteredTodos = _.where(filteredTodos, {
-				completed: false
-			});
+			where.completed = false;
 		}
 	}
-
-	if (reqParams.hasOwnProperty('q') && reqParams.q.trim().length > 0) {
-		var qs = reqParams.q.toLowerCase();
-		filteredTodos = _.filter(filteredTodos, function(todo) {
-			return todo.description.toLowerCase().indexOf(qs) > 0;
-		});
+	if (query.hasOwnProperty('q') && query.q.length > 0) {
+		where.description = {
+			$like: '%' + query.q + '%',
+		};
 	}
-
-	res.json(filteredTodos);
+	db.todo.findAll({
+		where: where
+	}).then(function(todos) {
+		res.json(todos);
+	}, function(e) {
+		res.status(500).send();
+	});
 });
 
 app.get('/todos/:id', function(req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	var todo = _.findWhere(todos, {
-		id: todoId
-	});
-	if (typeof todo != 'undefined') {
-		res.json(todo);
-	} else {
-		res.status(404).send();
-	}
-	//res.send('Asking for todo with ID: '+ req.params.id)
+	db.todo.findById(todoId).then(function(todo) {
+		return res.json(todo.toJSON());
+	}).catch(function(e) {
+		return res.status(500).send();
+	})
 });
 
 app.post('/todos', function(req, res) {
@@ -62,21 +55,13 @@ app.post('/todos', function(req, res) {
 	if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
 		return res.status(400).send();
 	}
-
 	var description = body.description.trim();
-
-	db.todo.create(body).then(function(todo){
+	db.todo.create(body).then(function(todo) {
 		res.json(todo.toJSON());
-	}).catch(function(e){
+	}).catch(function(e) {
 		console.log("Error occured when trying to post new todo item:" + e);
 		res.status(400).json(e);
 	});
-
-
-	//todoItem.id = nextId++;
-	//todos.push(todoItem);
-	//res.json(body);
-
 });
 
 app.delete('/todos/:id', function(req, res) {
