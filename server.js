@@ -1,7 +1,7 @@
 var express = require('express');
 var body_parser = require('body-parser');
 var _ = require("underscore");
-
+var db = require('./db');
 var app = express();
 var PORT = process.env.PORT || 3000;
 
@@ -16,7 +16,9 @@ app.get('/', function(req, res) {
 
 app.get('/todos', function(req, res) {
 	var reqParams = req.query; // parse quere parameters ?key=value&key2=value2 etc.
-	var filteredTodos = todos;
+	var filteredTodos = db.todo.
+
+	console.log(filteredTodos);
 
 	if (reqParams.hasOwnProperty('completed')) {
 		if (reqParams.completed === 'true') {
@@ -61,11 +63,19 @@ app.post('/todos', function(req, res) {
 		return res.status(400).send();
 	}
 
-	body.description = body.description.trim();
+	var description = body.description.trim();
 
-	todoItem.id = nextId++;
-	todos.push(todoItem);
-	res.json(body);
+	db.todo.create(body).then(function(todo){
+		res.json(todo.toJSON());
+	}).catch(function(e){
+		console.log("Error occured when trying to post new todo item:" + e);
+		res.status(400).json(e);
+	});
+
+
+	//todoItem.id = nextId++;
+	//todos.push(todoItem);
+	//res.json(body);
 
 });
 
@@ -114,6 +124,10 @@ app.put('/todos/:id', function(req, res) {
 
 });
 
-app.listen(PORT, function() {
-	console.log("Listen on port: " + PORT);
-});
+db.sequelize.sync().then(function() {
+	app.listen(PORT, function() {
+		console.log("Listen on port: " + PORT);
+	});
+}).catch(function(e) {
+	console.log("Error occured in db.sync: " + e);
+})
