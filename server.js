@@ -91,34 +91,28 @@ app.delete('/todos/:id', function(req, res) {
 
 app.put('/todos/:id', function(req, res) {
 	var id = parseInt(req.params.id, 10);
-	var todoItem = _.findWhere(todos, {
-		id: id
-	});
-
-	if (!todoItem) {
-		return res.status(404).send();
-	}
 	var body = _.pick(req.body, "description", "completed");
-
 	var validAttibutes = {};
-	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
+
+	if (body.hasOwnProperty('completed')) {
 		validAttibutes.completed = body.completed;
-	} else if (body.hasOwnProperty('completed')) {
-		//bad not a  boolean
-		return res.status(400).send();
-	} else {
-		// never provided the attibute, can continue no problem
 	}
 
-	if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
+	if (body.hasOwnProperty('description')) {
 		validAttibutes.description = body.description;
-	} else if (body.hasOwnProperty('description')) {
-		return res.status(400).send();
-	} else {
-
 	}
-	_.extend(todoItem, validAttibutes);
-	res.json(todoItem);
+
+	db.todo.findById(id).then(function(todo) {
+		if (todo) {
+			return todo.update(validAttibutes);
+		} else {
+			res.status(404).send();
+		}
+	}).then(function(updated) {
+		res.json(updated.toJSON());
+	}).catch(function(e) {
+		res.status(404).send();
+	});
 
 });
 
